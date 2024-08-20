@@ -1,0 +1,11 @@
+gendoc 13
+treecoords 8
+cipher 8
+greppo 5
+docs 3
+tests 3
+git 2
+wordfreq 1
+palindromish 1
+stringt 1
+has_seen 1
