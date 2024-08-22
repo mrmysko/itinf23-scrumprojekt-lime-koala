@@ -1,5 +1,4 @@
-[ClickUP](https://app.clickup.com/9014543136/v/l/8cmy0t0-314)
-
+**20-Aug**
 **Viktigast att färdigställa först:**
 Bygg en python-baserad agent som övervakar Docker-Container och kan ge distant administrering.
 Dessa agenter skall även föra vidare information till databas/eller webbsida, (CPU, minne, Diskutrymme och nätverksanvändning).
@@ -13,3 +12,5 @@ Prioritera enkel driftsättning av containrar.
 - Få Interagerande agent att kunna läsa och administrerar Docker från Remote Resurs
 - Få Web agent att interagera med WerbServer eller Databas
 - Framtida Funktion: Historia Övervakning för Base-Lines
+
+**För att se nuvarande status:** [ClickUP](https://app.clickup.com/9014543136/v/l/8cmy0t0-314)
