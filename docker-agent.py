@@ -1,7 +1,7 @@
 import docker
 client = docker.from_env()
 while True:
-    n = int(input("\n What info is looked for? \n 1. Status Check \n 2. Start Container \n 3. Stop Container \n 4. "))
+    n = int(input("\n What info is looked for? \n 1. Status Check \n 2. Start Container \n 3. Stop Container \n 4. System Check \n"))
     if n == 1:
         containers = client.containers.list()
         for container in containers:
@@ -13,11 +13,23 @@ while True:
     elif n == 2:
         print("WIP")
     elif n == 3:
-        print("WIP")
+        containers = client.containers.list()
+        for index, container in enumerate(containers):
+            stats = container.stats(stream=False)  # stream=False gives a single snapshot of stats
+
+                # Print some key stats (customize as per your need)
+            print(f"{index}. {f"Container: {container.name}", container}")
+        print("What Container to Stop?")
+        ans=int(input())
+        ids=str(containers[ans])
+        ids2 = ids[ 12:24 ]
+        client.api.stop(f"{ids2}")
+        
+    elif n == 4:
+        print(client.api.info())
     else:
         print("Give working Option")
 
-        client.api.info()
         
 
     #print(client.api.stats())
