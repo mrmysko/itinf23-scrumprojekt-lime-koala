@@ -3,7 +3,6 @@
 # curl -x <method> -H <url> -d <POST data>
 
 import docker
-import docker.errors
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
@@ -17,9 +16,18 @@ print(ct_names)
 
 # API Info?
 @app.route("/stats", methods=["GET"])
-def get_items():
+def api_stats():
     items = client.api.info()
     return jsonify(items)
+
+
+# Getting all information is time consuming in a single thread, multithreading?
+@app.route("/container/all", methods=["GET"])
+def ct_stats_all():
+    ct_stats_list = [
+        client.containers.get(name).stats(stream=False) for name in ct_names
+    ]
+    return jsonify(ct_stats_list)
 
 
 @app.route("/container/<name>", methods=["GET"])
@@ -38,7 +46,7 @@ def ct_stop(name):
         cont = client.containers.get(name)
         try:
             cont.stop()
-            return f"Stopping {name}.", 200
+            return f"Stopped {name}.", 200
         except docker.errors.APIError:
             return f"Could not stop {name}", 500
     else:
