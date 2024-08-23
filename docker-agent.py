@@ -1,46 +1,37 @@
+#!/usr/bin/env python3
+
 import docker
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
 client = docker.from_env()
-while True:
-    n = int(input("\n What info is looked for? \n 1. Status Check \n 2. Start Container \n 3. Stop Container \n 4. System Check \n"))
-    if n == 1:
-        containers = client.containers.list()
-        for container in containers:
-            stats = container.stats(stream=False)  # stream=False gives a single snapshot of stats
 
-                # Print some key stats (customize as per your need)
-            print(f"Container: {container.name}", f"CPU Usage: {stats['cpu_stats']['cpu_usage']['total_usage']}", f"Memory Usage: {stats['memory_stats']['usage']}", f"Network I/O: {stats['networks']}")
-            #print("\n ")
-    elif n == 2:
-        print("WIP")
-    elif n == 3:
-        containers = client.containers.list()
-        for index, container in enumerate(containers):
-            stats = container.stats(stream=False)  # stream=False gives a single snapshot of stats
 
-                # Print some key stats (customize as per your need)
-            print(f"{index}. {f"Container: {container.name}", container}")
-        print("What Container to Stop?")
-        ans=int(input())
-        ids=str(containers[ans])
-        ids2 = ids[ 12:24 ]
-        client.api.stop(f"{ids2}")
-        
-    elif n == 4:
-        print(client.api.info())
-    else:
-        print("Give working Option")
+@app.route("/stats", methods=["GET"])
+def get_items():
+    items = client.api.info()
+    return jsonify(items)
 
-        
 
-    #print(client.api.stats())
-    
-    # #Test för multipla Frågor
-    # n = int(input("What info is looked for?"))
-    # if n == 1:
-    #     client.containers.list()
-    # elif n== 2:
-    #     print("hejsan")
-    # elif n== 3:
-    #     print("hej då")
-    # else:
-    #     print(client.api.containers.())
+@app.route("/container/<name>", methods=["GET", "POST"])
+def process_command(name):
+    for cont in client.containers.list():
+        if cont.name == name:
+            return jsonify(cont.stats(stream=False))
+
+
+def ct_stats(name):
+    pass
+
+
+def ct_stop(name):
+    pass
+
+
+def ct_start(name):
+    pass
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0")
