@@ -1,19 +1,17 @@
-### Vision:
-Tillhandahålla ett webbaserat övervakningsverktyg för prestandaövervakning
-och administrering utav Docker-Container på flertal servrar
-med ett responsivt gränssnitt som visualiserar viktiga mätvärden i realtid,
-vilket gör det tillgängligt för Webadmins.
+### Vision
 
-**Struktur**
-![Architecture](./architecture.png)
+Tillhandahålla ett webbaserat övervakningsverktyg för prestandaövervakning och administrering utav Docker-Containers på flertal servrar med ett responsivt gränssnitt som visualiserar viktiga mätvärden i realtid, vilket gör det tillgängligt för Webbadmins.
 
-Varje host med docker engine installerat har också en agent som kommunicerar med en central kontrollserver. Kontrollservern har ett webbaserat gränssnitt med kontroller för att starta/stoppa containers.
+Programmering sker främst i Python. Kanske behövs powershell och bash för att hämta information från hostsen.
 
-Programmeing sker i Python.
+### Struktur
 
-Kommunicationen mellan agent och docker engine sker med hjälp av "Docker SDK for Python" paketet.
+![Architecture](./img/architecture.png)
 
-En kommunikationskanal mellan agenter och kontrollserver skapas med förslagsvis "sockets" paketet.
+Kommunicationen mellan agent och docker engine sker med hjälp av [Docker SDK for Python](https://docker-py.readthedocs.io/en/stable/) paketet och en webserver för API endpoints med [Flask](https://flask.palletsprojects.com/en/3.0.x/).
 
-**Frontend**
+Varje host med docker installerat har en agent som tar emot HTTP requests från en central server. Servern har ett webbaserat gränssnitt med knappar för att starta/stoppa containers.
+
+### Frontend
+
 ![Frontend](./img/frontend.png)

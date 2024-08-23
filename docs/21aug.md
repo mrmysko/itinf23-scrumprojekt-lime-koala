@@ -1,6 +1,7 @@
-Idag har vi jobbat på att beskrva arkitekturen. Skapat en ClickUp dashboard med en backlog.
+**Idag har vi...**
 
-![clickup.png](./img/clickup.png)
+Idag har vi jobbat på att beskriva arkitekturen. Skapat en ClickUp dashboard med en backlog.
+
+![21aug.png](./img/21aug.png)
 
 Vi har även börjat sätta upp miljön med docker-containers och koda en socket som kommunicerar mellan program.
-
