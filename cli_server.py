@@ -31,7 +31,7 @@ def main():
         # Match user choice, no match reruns the loop.
         match user_choice:
             case "1":
-                ct_stats()
+                ct_stats_print()
             case "2":
                 ct_start()
             case "3":
@@ -69,17 +69,22 @@ def menu_print(menu_items={"b": "Go back."}):
     print()
 
 
-def ct_stats():
+def ct_stats_print():
     """
     Prints container stats from all hosts.
     """
-    r = {
-        key: value
-        for ip in ips
-        for key, value in requests.get(f"http://{ip}:5000/container/all").json().items()
-    }
+    hosts = {ip: requests.get(f"http://{ip}:5000/container/all").json() for ip in ips}
 
-    pprint.pprint(r)
+    # THIS CODE IS SUPER UGLY SHIEEEET
+    for ip, value in hosts.items():
+        print(f'{value["hostname"]} ({ip})')
+        print(
+            f'{"Name".rjust(10)} {"Status".rjust(10)} {"CPU %".rjust(10)} {"MEM %".rjust(10)}'
+        )
+        for stat, stat_val in value["containers"].items():
+            print(
+                f"{stat.rjust(10)} {stat_val["status"].rjust(10)} {str(stat_val["cpu_percent"]).rjust(10)} {str(stat_val["mem_percent"]).rjust(10)}"
+            )
 
     input()
 
