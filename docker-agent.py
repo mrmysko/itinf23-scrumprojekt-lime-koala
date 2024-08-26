@@ -63,7 +63,7 @@ def ct_stats(name):
     API endpoint for fetching container stats.
     """
     # Look if container exists.
-    if name in containers.keys():
+    if name in containers:
         # Return a single snapshot of that containers stats, converted to json.
         return jsonify(pick_stats(containers[name]))
     else:
@@ -77,7 +77,7 @@ def ct_stop(name):
     Stop a container by name
     """
     # Look if the name exists and create it's container object.
-    if name in containers.keys():
+    if name in containers:
         cont = client.containers.get(name)
         # Try to start the container, return an error if not successful (APIerror raised).
         try:
@@ -96,7 +96,7 @@ def ct_start(name):
     Start a container by name
     """
     # Look if the name exists and create it's container object.
-    if name in containers.keys():
+    if name in containers:
         cont = client.containers.get(name)
         # Try to start the container, return an error if not successful (APIerror raised).
         try:
