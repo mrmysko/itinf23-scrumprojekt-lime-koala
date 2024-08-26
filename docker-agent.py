@@ -45,14 +45,13 @@ def ct_stats_all():
     all_stats = dict()
     all_stats[hostname] = dict()
     
-    ###################### Testing flask error - Checks if each container is running before attempting to fetch its stats.######
+    # Testing flask error - Checks if each container is running before attempting to fetch its stats.
     for container in containers.values():
         if container.status == "running":
             all_stats[hostname][container.name] = pick_stats(container)
         else:
             all_stats[hostname][container.name] = {"error": "Container is not running"}
-    ####
-    
+
     # Add container stats from global containers dict.
     all_stats[hostname].update(
         {
