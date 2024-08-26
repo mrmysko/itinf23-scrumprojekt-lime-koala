@@ -44,7 +44,15 @@ def ct_stats_all():
     # Create nested dict with hostname as top value
     all_stats = dict()
     all_stats[hostname] = dict()
-
+    
+    ###################### Testing flask error - Checks if each container is running before attempting to fetch its stats.######
+    for container in containers.values():
+        if container.status == "running":
+            all_stats[hostname][container.name] = pick_stats(container)
+        else:
+            all_stats[hostname][container.name] = {"error": "Container is not running"}
+    ####
+    
     # Add container stats from global containers dict.
     all_stats[hostname].update(
         {
@@ -113,7 +121,6 @@ def not_found(name):
     Return a not found message and a 404 status code.
     """
     return f"{name} not found.", 404
-
 
 def pick_stats(ct):
     """
