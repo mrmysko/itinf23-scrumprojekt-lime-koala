@@ -18,7 +18,16 @@ client = docker.from_env()
 
 # This only fetches containers at start, how to update on new containers without agent reboot?
 # Creates a dict with <ct_name>: <ct_object> key-value pairs.
+
 containers = {x.name: x for x in client.containers.list(all=True)}
+images = client.images.list()
+# formatted_images = [str(item).replace("<Image: '", "").replace("'>", "") for item in images]
+# formatted_list = [image.name for image in images]
+print(images)
+print(containers)
+# print("1", formatted_images)
+# print("2", dir(images[1]))
+# print("3", dir(formatted_images[0]))
 
 
 # API Info?
@@ -101,6 +110,27 @@ def ct_start(name):
         # Try to start the container, return an error if not successful (APIerror raised).
         try:
             cont.start()
+            return f"Starting {name}.", 200
+        except docker.errors.APIError:
+            return f"Could not start {name}.", 500
+    else:
+        return not_found(name)
+
+
+# Change this to a POST
+@app.route("/image/<name>/run", methods=["GET"])
+def img_run(name):
+    """
+    Run a container from image by name
+    """
+    # Look if the name exists and create it's container object.
+    if name in formatted_images():
+        img = client.containers.get(name)
+        # Try to start the container, return an error if not successful (APIerror raised).
+        try:
+            print("1", img)
+            print("2", img.run())
+            img.run()
             return f"Starting {name}.", 200
         except docker.errors.APIError:
             return f"Could not start {name}.", 500
