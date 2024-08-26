@@ -17,8 +17,8 @@ app = Flask(__name__)
 client = docker.from_env()
 
 # This only fetches containers at start, how to update on new containers without agent reboot?
-# Creates a dict with <ct_name>: <ct_object> key-value pairs.
-containers = {x.name: x for x in client.containers.list(all=True)}
+# Creates a list with container names.
+containers = [x.name for x in client.containers.list(all=True)]
 
 
 # API Info?
@@ -49,7 +49,7 @@ def ct_stats_all():
     all_stats[hostname].update(
         {
             key: value
-            for container in containers.values()
+            for container in containers
             for key, value in pick_stats(container).items()
         }
     )
@@ -115,23 +115,26 @@ def not_found(name):
     return f"{name} not found.", 404
 
 
-def pick_stats(ct):
+def pick_stats(ct) -> dict:
     """
     Picks out relevant container stats and formats them in a nested dict.
     """
 
     # Save container stats
-    stats = ct.stats(stream=False)
+    ct_obj = client.containers.get(ct)
+    stats = ct_obj.stats(stream=False)
     # stats = next(ct.stats(decode=True))
+
+    print(ct_obj)
 
     # pprint.pprint(stats)
 
     # Nested dict with container name as the top.
     ct_stats = dict()
-    ct_stats[ct.name] = dict()
+    ct_stats[ct] = dict()
 
     # Status
-    ct_stats[ct.name]["status"] = ct.status
+    ct_stats[ct]["status"] = ct_obj.status
 
     # _________________________________
     # Format CPU usage as a percentage.
@@ -148,7 +151,7 @@ def pick_stats(ct):
     cores = cpu_stats["online_cpus"]
 
     # Container CPU / System CPU * Number of cores * 100
-    ct_stats[ct.name]["cpu_percent"] = round(ct_cpu / system_cpu * cores * 100, 2)
+    ct_stats[ct]["cpu_percent"] = round(ct_cpu / system_cpu * cores * 100, 2)
 
     # ___________________________________
     # Format memory usage as a percentage.
@@ -156,7 +159,7 @@ def pick_stats(ct):
 
     # Memory usage / Memory limit * 100
     # Docker stats shows 0.01%, this shows 0.03%...hmmmm
-    ct_stats[ct.name]["mem_percent"] = round(
+    ct_stats[ct]["mem_percent"] = round(
         mem_stats["usage"] / mem_stats["limit"] * 100, 2
     )
 
@@ -166,7 +169,6 @@ def pick_stats(ct):
 if __name__ == "__main__":
     # Start the webserver listening on all interfaces.
     app.run(host="0.0.0.0", debug=True)
-
 
 # Stream stats on a 5 sec timer
 # while True:
