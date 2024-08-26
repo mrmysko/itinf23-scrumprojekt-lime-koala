@@ -1,4 +1,7 @@
-This sprint we will:
+### This sprint we will
+
+---
+
 - Setup docker with containers.
 - Create an agent communicating with the docker engine.
 - Create a control program that communicates with a single agent, receiving information and printing to terminal.
