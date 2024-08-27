@@ -83,7 +83,7 @@ def ct_stats_print():
         )
         for stat, stat_val in value["containers"].items():
             print(
-                f"{stat.rjust(10)} {stat_val["status"].rjust(10)} {str(stat_val["cpu_percent"]).rjust(10)} {str(stat_val["mem_percent"]).rjust(10)}"
+                f'{stat.rjust(10)} {stat_val["status"].rjust(10)} {str(stat_val["cpu_percent"]).rjust(10)} {str(stat_val["mem_percent"]).rjust(10)}'
             )
 
     input()
