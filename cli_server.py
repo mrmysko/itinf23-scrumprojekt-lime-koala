@@ -131,9 +131,12 @@ def enum_ct(hosts):
     """
     Enumerate containers so that they are accessible by a number for start/stop
     """
+
+    id = 1
     for value in hosts.values():
-        for id, (ct, stats) in enumerate(value["containers"].items(), start=1):
+        for stats in value["containers"].values():
             stats["id"] = id
+            id += 1
 
 
 if __name__ == "__main__":
