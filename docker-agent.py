@@ -21,11 +21,13 @@ client = docker.from_env()
 
 containers = {x.name: x for x in client.containers.list(all=True)}
 images = client.images.list()
-# formatted_images = [str(item).replace("<Image: '", "").replace("'>", "") for item in images]
+formatted_images = [
+    str(item).replace("<Image: '", "").replace("'>", "") for item in images
+]
 # formatted_list = [image.name for image in images]
-print(images)
-print(containers)
-# print("1", formatted_images)
+# print(images)
+# print(containers)
+# print("1", formatted_images[0])
 # print("2", dir(images[1]))
 # print("3", dir(formatted_images[0]))
 
@@ -118,24 +120,38 @@ def ct_start(name):
 
 
 # Change this to a POST
-@app.route("/image/<name>/run", methods=["GET"])
-def img_run(name):
+@app.route("/image/run", methods=["GET", "POST"])
+def img_run():
     """
     Run a container from image by name
     """
-    # Look if the name exists and create it's container object.
-    if name in formatted_images():
-        img = client.containers.get(name)
-        # Try to start the container, return an error if not successful (APIerror raised).
+    if request.method == "POST":
         try:
-            print("1", img)
-            print("2", img.run())
-            img.run()
-            return f"Starting {name}.", 200
-        except docker.errors.APIError:
-            return f"Could not start {name}.", 500
+            data = request.get_json(force=True)
+            image_name = data.get("image")
+            if not image_name:
+                return "Image is required", 400
+            try:
+                client.containers.run(image_name)
+                return f"Spinning up {image_name}.", 200
+            except docker.errors.APIError:
+                return f"Could not start {image_name}.", 500
+        except Exception as e:
+            return f"Failed to decode JSON object: {str(e)}", 400
+
     else:
-        return not_found(name)
+        return "Method not allowed", 405
+
+
+@app.route("/image/all", methods=["GET"])
+def img_list():
+    """
+    Lists all current images on host
+    """
+    # Look if the name exists and create it's container object.
+    #    image_list = client.images.list()
+    #    print(image_list)
+    return formatted_images
 
 
 def not_found(name):
