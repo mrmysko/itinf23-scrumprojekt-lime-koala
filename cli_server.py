@@ -2,6 +2,10 @@
 
 # Server software which manipulates remote hosts with agents listening.
 
+# TODO - Variable length container name display.
+# TODO - Handle wrong faulty input
+# TODO - Merge Print CT and Update CT
+
 import requests
 import pprint
 import os
@@ -33,10 +37,11 @@ def main():
         match user_choice:
             case "1":
                 ct_stats_print(hosts)
+                input()
             case "2":
-                ct_start()
+                ct_start(hosts)
             case "3":
-                ct_stop()
+                ct_stop(hosts)
             case "4":
                 hosts_api_stats()
             case "5":
@@ -74,10 +79,12 @@ def menu_print(menu_items={"b": "Go back."}):
 
 def ct_stats_request():
     """
-    Request container stats from hosts."""
+    Request container stats from hosts.
+    """
 
     hosts = {ip: requests.get(f"http://{ip}:5000/container/all").json() for ip in ips}
 
+    # This re-enumerates on every request atm.
     enum_ct(hosts)
 
     return hosts
@@ -99,21 +106,40 @@ def ct_stats_print(hosts):
                 f'{str(stat_val["id"]).rjust(3)} {stat.rjust(10)} {stat_val["status"].rjust(10)} {str(stat_val["cpu_percent"]).rjust(10)} {str(stat_val["mem_percent"]).rjust(10)}'
             )
 
-    input()
 
-
-def ct_start():
+def ct_start(hosts):
     """
     Start a container by list id.
     """
-    input("Coming soon...")
+    ct_stats_print(hosts)
+
+    id = input("ID: ")
+
+    for ip, value in hosts.items():
+        for ct_name, stats in value["containers"].items():
+            if stats["id"] == int(id):
+                print(f"Stopping {ct_name}")
+                requests.get(f"http://{ip}:5000/container/{ct_name}/start")
+                input()
+                break
 
 
-def ct_stop():
+def ct_stop(hosts):
     """
     Stop a container by list id.
     """
-    input("Coming soon...")
+
+    ct_stats_print(hosts)
+
+    id = input("ID: ")
+
+    for ip, value in hosts.items():
+        for ct_name, stats in value["containers"].items():
+            if stats["id"] == int(id):
+                print(f"Stopping {ct_name}")
+                requests.get(f"http://{ip}:5000/container/{ct_name}/stop")
+                input()
+                break
 
 
 def hosts_api_stats():
@@ -146,5 +172,3 @@ if __name__ == "__main__":
 # json.loads(request.content) and request.json() is the same thing?
 
 # http://{ip}:5000/container/<name>/start
-
-# {ip: <ip>, ct_name: <ct_name>}
