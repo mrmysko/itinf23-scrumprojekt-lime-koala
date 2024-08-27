@@ -113,7 +113,12 @@ def ct_start(hosts):
     """
     ct_stats_print(hosts)
 
-    id = input("ID: ")
+    while True:
+        id = input("ID: ")
+        if id.isdigit():
+            break
+        else:
+            print("Invalid input.")
 
     for ip, value in hosts.items():
         for ct_name, stats in value["containers"].items():
@@ -131,7 +136,12 @@ def ct_stop(hosts):
 
     ct_stats_print(hosts)
 
-    id = input("ID: ")
+    while True:
+        id = input("ID: ")
+        if id.isdigit():
+            break
+        else:
+            print("Invalid input.")
 
     for ip, value in hosts.items():
         for ct_name, stats in value["containers"].items():
