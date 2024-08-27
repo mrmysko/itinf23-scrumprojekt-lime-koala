@@ -63,8 +63,6 @@ def ct_stats_all():
 
     return jsonify(all_stats)
 
-# Old ct_stats
-'''
 @app.route("/container/<name>", methods=["GET"])
 def ct_stats(name):
     """
@@ -76,27 +74,6 @@ def ct_stats(name):
         return jsonify(pick_stats(containers[name]))
     else:
         return not_found(name)
-'''
-# New ct_stats    
-@app.route("/container/<name>", methods=["GET"])
-def ct_stats(name):
-    """
-    API endpoint for getting stats from a specific container.
-    """
-    # Look if container exists.
-    if name in containers.keys():
-        container = containers[name]
-        if container.status == "running":
-            stats = pick_stats(container)
-        else:
-            stats = {"error": "Container is not running"}
-    else:
-        stats = {"error": "Container not found"}
-
-    # Return the stats or error message as JSON.
-    return jsonify(stats)
-
-
 
 # Change this to a POST
 @app.route("/container/<name>/stop", methods=["GET"])
@@ -146,6 +123,9 @@ def pick_stats(ct):
     """
     Picks out relevant container stats and formats them in a nested dict.
     """
+    # -
+    if ct.status == "exited":
+        return 
 
     # Save container stats
     stats = ct.stats(stream=False)
