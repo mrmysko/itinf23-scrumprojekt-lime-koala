@@ -3,14 +3,11 @@
 # TODO - Stream stats instead of snapshot.
 # TODO - Error handling - crashing if a container is stopped
 # TODO - SLOW! Gathering stats is slow even with only two containers.
-# TODO - Container status not updating on fetch. Set on container object creation?
-# Go back to getting container objects on request.
 
 # curl -x <method> <url> -d <POST data>
 
 import docker
 from flask import Flask, request, jsonify
-import pprint
 
 app = Flask(__name__)
 
@@ -38,21 +35,17 @@ def ct_stats_all():
     API endpoint for getting stats from all containers.
     """
 
-    # Get hostname
-    hostname = client.api.info().get("Name")
-
-    # Create nested dict with hostname as top value
+    # Create a dict for all stats
     all_stats = dict()
-    all_stats[hostname] = dict()
+    # Get hostname
+    all_stats["hostname"] = client.api.info().get("Name")
 
-    # Add container stats from global containers dict.
-    all_stats[hostname].update(
-        {
-            key: value
-            for container in containers
-            for key, value in pick_stats(container).items()
-        }
-    )
+    # Add container stats to containers key.
+    all_stats["containers"] = {
+        key: value
+        for container in containers
+        for key, value in pick_stats(container).items()
+    }
 
     return jsonify(all_stats)
 
@@ -124,10 +117,6 @@ def pick_stats(ct) -> dict:
     ct_obj = client.containers.get(ct)
     stats = ct_obj.stats(stream=False)
     # stats = next(ct.stats(decode=True))
-
-    print(ct_obj)
-
-    # pprint.pprint(stats)
 
     # Nested dict with container name as the top.
     ct_stats = dict()
