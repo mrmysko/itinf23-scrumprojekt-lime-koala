@@ -18,6 +18,7 @@ def main():
         "2": "Start CT",
         "3": "Stop CT",
         "4": "API status",
+        "5": "Update CT",
         "e": "Exit",
     }
 
@@ -31,13 +32,15 @@ def main():
         # Match user choice, no match reruns the loop.
         match user_choice:
             case "1":
-                ct_stats_print()
+                ct_stats_print(hosts)
             case "2":
                 ct_start()
             case "3":
                 ct_stop()
             case "4":
                 hosts_api_stats()
+            case "5":
+                hosts = ct_stats_request()
             case "e":
                 break
             case _:
@@ -69,21 +72,31 @@ def menu_print(menu_items={"b": "Go back."}):
     print()
 
 
-def ct_stats_print():
+def ct_stats_request():
+    """
+    Request container stats from hosts."""
+
+    hosts = {ip: requests.get(f"http://{ip}:5000/container/all").json() for ip in ips}
+
+    enum_ct(hosts)
+
+    return hosts
+
+
+def ct_stats_print(hosts):
     """
     Prints container stats from all hosts.
     """
-    hosts = {ip: requests.get(f"http://{ip}:5000/container/all").json() for ip in ips}
 
     # THIS CODE IS SUPER UGLY SHIEEEET
     for ip, value in hosts.items():
         print(f'{value["hostname"]} ({ip})')
         print(
-            f'{"Name".rjust(10)} {"Status".rjust(10)} {"CPU %".rjust(10)} {"MEM %".rjust(10)}'
+            f'{"ID".rjust(3)} {"Name".rjust(10)} {"Status".rjust(10)} {"% CPU".rjust(10)} {"% MEM".rjust(10)}'
         )
         for stat, stat_val in value["containers"].items():
             print(
-                f'{stat.rjust(10)} {stat_val["status"].rjust(10)} {str(stat_val["cpu_percent"]).rjust(10)} {str(stat_val["mem_percent"]).rjust(10)}'
+                f'{str(stat_val["id"]).rjust(3)} {stat.rjust(10)} {stat_val["status"].rjust(10)} {str(stat_val["cpu_percent"]).rjust(10)} {str(stat_val["mem_percent"]).rjust(10)}'
             )
 
     input()
@@ -114,8 +127,21 @@ def hosts_api_stats():
     input()
 
 
+def enum_ct(hosts):
+    """
+    Enumerate containers so that they are accessible by a number for start/stop
+    """
+    for value in hosts.values():
+        for id, (ct, stats) in enumerate(value["containers"].items(), start=1):
+            stats["id"] = id
+
+
 if __name__ == "__main__":
     main()
 
 
 # json.loads(request.content) and request.json() is the same thing?
+
+# http://{ip}:5000/container/<name>/start
+
+# {ip: <ip>, ct_name: <ct_name>}
