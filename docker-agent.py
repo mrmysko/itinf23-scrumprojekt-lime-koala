@@ -105,6 +105,16 @@ def ct_start(name):
             return f"Could not start {name}.", 500
     else:
         return not_found(name)
+    
+@app.route("/container/all/prune", methods=["Get"])
+def prune():
+    #a api endpoint for pruning containers.
+
+    
+    #this will prune the containers
+    client.containers.prune()
+    
+    return "containers have been pruned"
 
 
 @app.route("/image/run", methods=["POST"])
