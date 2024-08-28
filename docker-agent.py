@@ -6,7 +6,7 @@
 # curl -x <method> <url> -d <POST data>
 
 import docker
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
@@ -22,12 +22,12 @@ formatted_images = [
 containers = [x.name for x in client.containers.list(all=True)]
 
 
-# API Info?
 @app.route("/stats", methods=["GET"])
 def client_api_stats():
     """
     API endpoint for getting docker api stats
     """
+
     items = client.api.info()
     return jsonify(items)
 
@@ -39,11 +39,8 @@ def ct_stats_all():
     API endpoint for getting stats from all containers.
     """
 
-    # Create a dict for all stats
-    all_stats = dict()
-
-    # Get hostname
-    all_stats["hostname"] = client.api.info().get("Name")
+    # Create a dict structure for hosts.
+    all_stats = {"hostname": client.api.info().get("Name"), "containers": {}}
 
     # Add container stats to containers key.
     with ThreadPoolExecutor() as executor:
@@ -61,6 +58,7 @@ def ct_stats(name):
     """
     API endpoint for fetching container stats.
     """
+
     # Look if container exists.
     if name in containers:
         # Return a single snapshot of that containers stats, converted to json.
@@ -75,6 +73,7 @@ def ct_stop(name):
     """
     Stop a container by name
     """
+
     # Look if the name exists and create it's container object.
     if name in containers:
         cont = client.containers.get(name)
@@ -94,6 +93,7 @@ def ct_start(name):
     """
     Start a container by name
     """
+
     # Look if the name exists and create it's container object.
     if name in containers:
         cont = client.containers.get(name)
@@ -107,28 +107,23 @@ def ct_start(name):
         return not_found(name)
 
 
-# Change this to a POST
-@app.route("/image/run", methods=["GET", "POST"])
+@app.route("/image/run", methods=["POST"])
 def img_run():
     """
     Run a container from image by name
     """
-    if request.method == "POST":
+    try:
+        data = request.get_json(force=True)
+        image_name = data.get("image")
+        if not image_name:
+            return "Image is required", 400
         try:
-            data = request.get_json(force=True)
-            image_name = data.get("image")
-            if not image_name:
-                return "Image is required", 400
-            try:
-                client.containers.run(image_name)
-                return f"Spinning up {image_name}.", 200
-            except docker.errors.APIError:
-                return f"Could not start {image_name}.", 500
-        except Exception as e:
-            return f"Failed to decode JSON object: {str(e)}", 400
-
-    else:
-        return "Method not allowed", 405
+            client.containers.run(image_name)
+            return f"Spinning up {image_name}.", 200
+        except docker.errors.APIError:
+            return f"Could not start {image_name}.", 500
+    except Exception as e:
+        return f"Failed to decode JSON object: {str(e)}", 400
 
 
 @app.route("/image/all", methods=["GET"])
@@ -136,9 +131,7 @@ def img_list():
     """
     Lists all current images on host
     """
-    # Look if the name exists and create it's container object.
-    #    image_list = client.images.list()
-    #    print(image_list)
+
     return formatted_images
 
 
@@ -157,7 +150,6 @@ def pick_stats(ct) -> dict:
     # Save container stats
     ct_obj = client.containers.get(ct)
     stats = ct_obj.stats(stream=False)
-    # stats = next(ct.stats(decode=True))
 
     # Nested dict with container name as the top.
     ct_stats = dict()
