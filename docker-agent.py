@@ -45,13 +45,6 @@ def ct_stats_all():
     all_stats = dict()
     all_stats[hostname] = dict()
     
-    # Testing flask error - Checks if each container is running before attempting to fetch its stats.
-    for container in containers.values():
-        if container.status == "running":
-            all_stats[hostname][container.name] = pick_stats(container)
-        else:
-            all_stats[hostname][container.name] = {"error": "Container is not running"}
-
     # Add container stats from global containers dict.
     all_stats[hostname].update(
         {
@@ -123,9 +116,6 @@ def pick_stats(ct):
     """
     Picks out relevant container stats and formats them in a nested dict.
     """
-    # -
-    if ct.status == "exited":
-        return 
 
     # Save container stats
     stats = ct.stats(stream=False)
@@ -139,6 +129,10 @@ def pick_stats(ct):
 
     # Status
     ct_stats[ct.name]["status"] = ct.status
+
+    # If container status is "exited", just move on
+    if ct.status == "exited":
+        return 
 
     # _________________________________
     # Format CPU usage as a percentage.
