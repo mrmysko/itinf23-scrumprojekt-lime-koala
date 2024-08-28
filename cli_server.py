@@ -2,8 +2,7 @@
 
 # Server software which manipulates remote hosts with agents listening.
 
-# TODO - Variable length container name display.
-# TODO - Handle wrong faulty input
+# TODO - Variable length container name display. - Better printout
 # TODO - Merge Print CT and Update CT
 
 import requests
@@ -109,15 +108,22 @@ def ct_stats_print(hosts):
     Prints container stats from all hosts.
     """
 
+    # Get longest container name.
+    length = 0
+    for value in hosts.values():
+        for name in value["containers"]:
+            if len(name) > length:
+                length = len(name)
+
     # THIS CODE IS SUPER UGLY SHIEEEET
     for ip, value in hosts.items():
         print(f'{value["hostname"]} ({ip})')
         print(
-            f'{"ID".rjust(3)} {"Name".rjust(10)} {"Status".rjust(10)} {"% CPU".rjust(10)} {"% MEM".rjust(10)}'
+            f'{"ID".rjust(3)} {"Name".rjust(length)} {"Status".rjust(10)} {"% CPU".rjust(10)} {"% MEM".rjust(10)}'
         )
         for stat, stat_val in value["containers"].items():
             print(
-                f'{str(stat_val["id"]).rjust(3)} {stat.rjust(10)} {stat_val["status"].rjust(10)} {str(stat_val["cpu_percent"]).rjust(10)} {str(stat_val["mem_percent"]).rjust(10)}'
+                f'{str(stat_val["id"]).rjust(3)} {stat.rjust(length)} {stat_val["status"].rjust(10)} {str(stat_val.get("cpu_percent", "")).rjust(10)} {str(stat_val.get("mem_percent", "")).rjust(10)}'
             )
 
 
