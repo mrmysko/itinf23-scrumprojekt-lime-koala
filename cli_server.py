@@ -9,6 +9,7 @@
 import requests
 import pprint
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 # Open the file with ips and read it to a variable.
 with open("hosts.txt") as f:
@@ -45,7 +46,7 @@ def main():
             case "4":
                 hosts_api_stats()
             case "5":
-                hosts = ct_stats_request()
+                hosts = pool_requests(ips)
             case "e":
                 break
             case _:
@@ -77,14 +78,27 @@ def menu_print(menu_items={"b": "Go back."}):
     print()
 
 
-def ct_stats_request():
+def ct_stats_request(ip):
     """
     Request container stats from hosts.
     """
 
-    hosts = {ip: requests.get(f"http://{ip}:5000/container/all").json() for ip in ips}
+    request = {ip: requests.get(f"http://{ip}:5000/container/all").json()}
 
-    # This re-enumerates on every request atm.
+    return request
+
+
+def pool_requests(ips):
+    """
+    Multithread requests
+    """
+
+    with ThreadPoolExecutor() as executor:
+        requested = executor.map(ct_stats_request, ips, timeout=10)
+
+    hosts = {key: value for host in list(requested) for key, value in host.items()}
+
+    # This re-enumerates on every new request atm.-
     enum_ct(hosts)
 
     return hosts
