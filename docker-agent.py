@@ -108,16 +108,14 @@ def ct_start(name):
         return not_found(name)
     
 @app.route("/container/all/prune", methods=["Get"])
-def prune1():
+def prune():
     #a api endpoint for pruning containers.
 
     
     #this will prune the containers
-    prune = client.containers.prune()
-    prune
-    return "containers have been pruned"
+    client.containers.prune()
     
-prune1()
+    return "containers have been pruned"
 
 
 def not_found(name):
