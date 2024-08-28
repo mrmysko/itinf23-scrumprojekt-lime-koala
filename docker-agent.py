@@ -2,12 +2,12 @@
 
 # TODO - Stream stats instead of snapshot.
 # TODO - Error handling - crashing if a container is stopped
-# TODO - SLOW! Gathering stats is slow even with only two containers.
 
 # curl -x <method> <url> -d <POST data>
 
 import docker
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
+from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
 
@@ -41,15 +41,17 @@ def ct_stats_all():
 
     # Create a dict for all stats
     all_stats = dict()
+
     # Get hostname
     all_stats["hostname"] = client.api.info().get("Name")
 
     # Add container stats to containers key.
-    all_stats["containers"] = {
-        key: value
-        for container in containers
-        for key, value in pick_stats(container).items()
-    }
+    with ThreadPoolExecutor() as executor:
+        fetched_stats = executor.map(pick_stats, containers, timeout=5)
+
+    all_stats["containers"] = dict()
+    for value in fetched_stats:
+        all_stats["containers"].update(value)
 
     return jsonify(all_stats)
 
@@ -164,6 +166,7 @@ def pick_stats(ct) -> dict:
     # Status
     ct_stats[ct]["status"] = ct_obj.status
 
+    # Stream doesnt include precpu data.
     # _________________________________
     # Format CPU usage as a percentage.
     cpu_stats = stats["cpu_stats"]
@@ -197,8 +200,3 @@ def pick_stats(ct) -> dict:
 if __name__ == "__main__":
     # Start the webserver listening on all interfaces.
     app.run(host="0.0.0.0", debug=True)
-
-# Stream stats on a 5 sec timer
-# while True:
-#   pprint.pprint(next(ct.stats(decode=True)))
-#   time.sleep(5)
