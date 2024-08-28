@@ -12,6 +12,10 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 client = docker.from_env()
+images = client.images.list()
+formatted_images = [
+    str(item).replace("<Image: '", "").replace("'>", "") for item in images
+]
 
 # This only fetches containers at start, how to update on new containers without agent reboot?
 # Creates a list with container names.
@@ -99,6 +103,41 @@ def ct_start(name):
             return f"Could not start {name}.", 500
     else:
         return not_found(name)
+
+
+# Change this to a POST
+@app.route("/image/run", methods=["GET", "POST"])
+def img_run():
+    """
+    Run a container from image by name
+    """
+    if request.method == "POST":
+        try:
+            data = request.get_json(force=True)
+            image_name = data.get("image")
+            if not image_name:
+                return "Image is required", 400
+            try:
+                client.containers.run(image_name)
+                return f"Spinning up {image_name}.", 200
+            except docker.errors.APIError:
+                return f"Could not start {image_name}.", 500
+        except Exception as e:
+            return f"Failed to decode JSON object: {str(e)}", 400
+
+    else:
+        return "Method not allowed", 405
+
+
+@app.route("/image/all", methods=["GET"])
+def img_list():
+    """
+    Lists all current images on host
+    """
+    # Look if the name exists and create it's container object.
+    #    image_list = client.images.list()
+    #    print(image_list)
+    return formatted_images
 
 
 def not_found(name):
