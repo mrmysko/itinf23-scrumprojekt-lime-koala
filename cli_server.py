@@ -40,9 +40,9 @@ def main():
                 ct_stats_print(hosts)
                 input()
             case "2":
-                ct_start(hosts)
+                ct_action(hosts, "start")
             case "3":
-                ct_stop(hosts)
+                ct_action(hosts, "stop")
             case "4":
                 hosts_api_stats()
             case "5":
@@ -121,49 +121,26 @@ def ct_stats_print(hosts):
             )
 
 
-def ct_start(hosts):
+def ct_action(hosts, action):
     """
     Start a container by list id.
     """
     ct_stats_print(hosts)
 
     while True:
-        id = input("ID: ")
-        if id.isdigit():
+        id = input("ID (0 = back): ")
+        if id == "0":
             break
+        elif id.isdigit():
+            for ip, value in hosts.items():
+                for ct_name, stats in value["containers"].items():
+                    if stats["id"] == int(id):
+                        print(f"{action} {ct_name}")
+                        requests.get(f"http://{ip}:5000/container/{ct_name}/{action}")
+                        input()
+                        break
         else:
             print("Invalid input.")
-
-    for ip, value in hosts.items():
-        for ct_name, stats in value["containers"].items():
-            if stats["id"] == int(id):
-                print(f"Stopping {ct_name}")
-                requests.get(f"http://{ip}:5000/container/{ct_name}/start")
-                input()
-                break
-
-
-def ct_stop(hosts):
-    """
-    Stop a container by list id.
-    """
-
-    ct_stats_print(hosts)
-
-    while True:
-        id = input("ID: ")
-        if id.isdigit():
-            break
-        else:
-            print("Invalid input.")
-
-    for ip, value in hosts.items():
-        for ct_name, stats in value["containers"].items():
-            if stats["id"] == int(id):
-                print(f"Stopping {ct_name}")
-                requests.get(f"http://{ip}:5000/container/{ct_name}/stop")
-                input()
-                break
 
 
 def hosts_api_stats():
