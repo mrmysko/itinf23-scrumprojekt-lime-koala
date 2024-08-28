@@ -168,7 +168,11 @@ def pick_stats(ct) -> dict:
     # Status
     ct_stats[ct]["status"] = ct_obj.status
 
-    # Stream doesnt include precpu data.
+    # If container status is exited, then move on.
+    if ct_obj.status == "exited":
+        return ct_stats
+
+    # Stream doesnt include precpu data
     # _________________________________
     # Format CPU usage as a percentage.
     cpu_stats = stats["cpu_stats"]
