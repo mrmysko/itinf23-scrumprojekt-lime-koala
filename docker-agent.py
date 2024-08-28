@@ -167,8 +167,8 @@ def pick_stats(ct) -> dict:
     ct_stats[ct]["status"] = ct_obj.status
 
     # If container status is exited, then move on.
-    if ct.status == "exited":
-        return 
+    if ct_obj.status == "exited":
+        return ct_stats
 
     # Stream doesnt include precpu data
     # _________________________________
