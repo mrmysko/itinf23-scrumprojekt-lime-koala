@@ -2,16 +2,20 @@
 
 # TODO - Stream stats instead of snapshot.
 # TODO - Error handling - crashing if a container is stopped
-# TODO - SLOW! Gathering stats is slow even with only two containers.
 
 # curl -x <method> <url> -d <POST data>
 
 import docker
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
+from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
 
 client = docker.from_env()
+images = client.images.list()
+formatted_images = [
+    str(item).replace("<Image: '", "").replace("'>", "") for item in images
+]
 
 # This only fetches containers at start, how to update on new containers without agent reboot?
 # Creates a list with container names.
@@ -37,15 +41,17 @@ def ct_stats_all():
 
     # Create a dict for all stats
     all_stats = dict()
+
     # Get hostname
     all_stats["hostname"] = client.api.info().get("Name")
 
     # Add container stats to containers key.
-    all_stats["containers"] = {
-        key: value
-        for container in containers
-        for key, value in pick_stats(container).items()
-    }
+    with ThreadPoolExecutor() as executor:
+        fetched_stats = executor.map(pick_stats, containers, timeout=5)
+
+    all_stats["containers"] = dict()
+    for value in fetched_stats:
+        all_stats["containers"].update(value)
 
     return jsonify(all_stats)
 
@@ -101,6 +107,41 @@ def ct_start(name):
         return not_found(name)
 
 
+# Change this to a POST
+@app.route("/image/run", methods=["GET", "POST"])
+def img_run():
+    """
+    Run a container from image by name
+    """
+    if request.method == "POST":
+        try:
+            data = request.get_json(force=True)
+            image_name = data.get("image")
+            if not image_name:
+                return "Image is required", 400
+            try:
+                client.containers.run(image_name)
+                return f"Spinning up {image_name}.", 200
+            except docker.errors.APIError:
+                return f"Could not start {image_name}.", 500
+        except Exception as e:
+            return f"Failed to decode JSON object: {str(e)}", 400
+
+    else:
+        return "Method not allowed", 405
+
+
+@app.route("/image/all", methods=["GET"])
+def img_list():
+    """
+    Lists all current images on host
+    """
+    # Look if the name exists and create it's container object.
+    #    image_list = client.images.list()
+    #    print(image_list)
+    return formatted_images
+
+
 def not_found(name):
     """
     Return a not found message and a 404 status code.
@@ -129,6 +170,7 @@ def pick_stats(ct) -> dict:
     if ct.status == "exited":
         return 
 
+    # Stream doesnt include precpu data
     # _________________________________
     # Format CPU usage as a percentage.
     cpu_stats = stats["cpu_stats"]
@@ -162,8 +204,3 @@ def pick_stats(ct) -> dict:
 if __name__ == "__main__":
     # Start the webserver listening on all interfaces.
     app.run(host="0.0.0.0", debug=True)
-
-# Stream stats on a 5 sec timer
-# while True:
-#   pprint.pprint(next(ct.stats(decode=True)))
-#   time.sleep(5)
