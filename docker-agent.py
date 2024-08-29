@@ -15,6 +15,7 @@ import time
 app = Flask(__name__)
 
 client = docker.from_env()
+containers = [x.name for x in client.containers.list(all=True)]
 
 
 @app.route("/stats", methods=["GET"])
