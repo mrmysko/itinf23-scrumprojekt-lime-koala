@@ -121,23 +121,25 @@ def ct_action(hosts, action):
     """
     Start a container by list id.
     """
+    clear_console()
+    menu_print()
     ct_stats_print(hosts)
 
     while True:
-        id = input("ID: (0: Back) ")
+        id = input("ID: ")
         # Check if id is 0, a digit or something else.
-        if id == "0":
+        if id.lower() == "b":
             break
         elif id.isdigit():
             for ip, value in hosts.items():
                 for ct_name, stats in value["containers"].items():
                     if stats["id"] == int(id):
-                        print(f"{action} {ct_name}")
                         requests.get(f"http://{ip}:5000/container/{ct_name}/{action}")
+                        print(f"{action} {ct_name}")
                         input()
                         break
-        else:
-            print("Invalid input.")
+            else:
+                pass
 
 
 def hosts_api_stats():
