@@ -106,11 +106,19 @@ def ct_stats_print(hosts):
     for ip, value in hosts.items():
         print(f'{value["hostname"]} ({ip})')
         print(
-            f'{"ID".rjust(3)} {"Name".rjust(10)} {"Status".rjust(10)} {"% CPU".rjust(10)} {"% MEM".rjust(10)}'
+            "ID".rjust(3),
+            "Name".rjust(10),
+            "Status".rjust(10),
+            "% CPU".rjust(10),
+            "% MEM".rjust(10),
         )
         for stat, stat_val in value["containers"].items():
             print(
-                f'{str(stat_val["id"]).rjust(3)} {stat.rjust(10)} {stat_val["status"].rjust(10)} {str(stat_val["cpu_percent"]).rjust(10)} {str(stat_val["mem_percent"]).rjust(10)}'
+                str(stat_val["id"]).rjust(3),
+                stat.rjust(10),
+                stat_val["status"].rjust(10),
+                str(stat_val["cpu_percent"]).rjust(10),
+                str(stat_val["mem_percent"]).rjust(10),
             )
 
 
