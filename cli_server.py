@@ -143,8 +143,12 @@ def ct_action(ips, action):
             for ip, value in hosts.items():
                 for ct_name, stats in value["containers"].items():
                     if stats["id"] == int(id):
-                        requests.get(f"http://{ip}:5000/container/{ct_name}/{action}")
-                        print(f"{action} {ct_name}")
+                        if requests.get(
+                            f"http://{ip}:5000/container/{ct_name}/{action}"
+                        ):
+                            print(f"{action} {ct_name}")
+                        else:
+                            print(f"Could not {action} {ct_name}")
                         input()
                         break
             else:
