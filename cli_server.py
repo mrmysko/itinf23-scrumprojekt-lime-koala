@@ -2,10 +2,6 @@
 
 # Server software which manipulates remote hosts with agents listening.
 
-# TODO - Variable length container name display.
-# TODO - Handle wrong faulty input
-# TODO - Merge Print CT and Update CT
-
 import requests
 import pprint
 import os
@@ -23,7 +19,6 @@ def main():
         "2": "Start CT",
         "3": "Stop CT",
         "4": "API status",
-        "5": "Update CT",
         "e": "Exit",
     }
 
@@ -37,7 +32,7 @@ def main():
         # Match user choice, no match reruns the loop.
         match user_choice:
             case "1":
-                ct_stats_print(hosts)
+                ct_stats_print(ips)
                 input()
             case "2":
                 ct_action(hosts, "start")
@@ -45,8 +40,6 @@ def main():
                 ct_action(hosts, "stop")
             case "4":
                 hosts_api_stats()
-            case "5":
-                hosts = pool_requests(ips)
             case "e":
                 break
             case _:
@@ -104,10 +97,13 @@ def pool_requests(ips):
     return hosts
 
 
-def ct_stats_print(hosts):
+def ct_stats_print(ips):
     """
     Prints container stats from all hosts.
     """
+    global hosts
+
+    hosts = pool_requests(ips)
 
     # THIS CODE IS SUPER UGLY SHIEEEET
     for ip, value in hosts.items():
@@ -128,7 +124,8 @@ def ct_action(hosts, action):
     ct_stats_print(hosts)
 
     while True:
-        id = input("ID (0 = back): ")
+        id = input("ID: (0: Back) ")
+        # Check if id is 0, a digit or something else.
         if id == "0":
             break
         elif id.isdigit():
