@@ -1,25 +1,19 @@
 #!/usr/bin/env python3
 
 # TODO - Stream stats instead of snapshot.
-# TODO - Error handling - crashing if a container is stopped
 
 # curl -x <method> <url> -d <POST data>
 
 import docker
 from flask import Flask, request, jsonify
 from concurrent.futures import ThreadPoolExecutor
+import threading
+import time
 
+# Create a flask app
 app = Flask(__name__)
 
 client = docker.from_env()
-images = client.images.list()
-formatted_images = [
-    str(item).replace("<Image: '", "").replace("'>", "") for item in images
-]
-
-# This only fetches containers at start, how to update on new containers without agent reboot?
-# Creates a list with container names.
-containers = [x.name for x in client.containers.list(all=True)]
 
 
 @app.route("/stats", methods=["GET"])
@@ -105,15 +99,15 @@ def ct_start(name):
             return f"Could not start {name}.", 500
     else:
         return not_found(name)
-    
+
+
 @app.route("/container/all/prune", methods=["Get"])
 def prune():
-    #a api endpoint for pruning containers.
+    # a api endpoint for pruning containers.
 
-    
-    #this will prune the containers
+    # this will prune the containers
     client.containers.prune()
-    
+
     return "containers have been pruned"
 
 
@@ -203,6 +197,29 @@ def pick_stats(ct) -> dict:
     return ct_stats
 
 
+def background_updates():
+    """
+    Update available containers
+    """
+    # Makes the containers and formatted images available in a global context.
+    global containers
+    global formatted_images
+
+    while True:
+        # Creates a list with container names.
+        containers = [x.name for x in client.containers.list(all=True)]
+
+        # Create a formatted list with image names.
+        images = client.images.list()
+        formatted_images = [
+            str(item).replace("<Image: '", "").replace("'>", "") for item in images
+        ]
+        # Update every 5 seconds
+        time.sleep(5)
+
+
 if __name__ == "__main__":
+    # Creates a thread that runs update_containers.
+    threading.Thread(target=background_updates, daemon=True).start()
     # Start the webserver listening on all interfaces.
     app.run(host="0.0.0.0", debug=True)
