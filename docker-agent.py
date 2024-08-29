@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # TODO - Stream stats instead of snapshot.
+# TODO - Move away from global variables, its lazy.
 
 # curl -x <method> <url> -d <POST data>
 
@@ -14,6 +15,7 @@ import time
 app = Flask(__name__)
 
 client = docker.from_env()
+containers = [x.name for x in client.containers.list(all=True)]
 
 
 @app.route("/stats", methods=["GET"])
@@ -30,21 +32,10 @@ def client_api_stats():
 @app.route("/container/all", methods=["GET"])
 def ct_stats_all():
     """
-    API endpoint for getting stats from all containers.
+    API endpoint to serve all container stats.
     """
 
-    # Create a dict structure for hosts.
-    all_stats = {"hostname": client.api.info().get("Name"), "containers": {}}
-
-    # Add container stats to containers key.
-    with ThreadPoolExecutor() as executor:
-        fetched_stats = executor.map(pick_stats, containers, timeout=5)
-
-    all_stats["containers"] = dict()
-    for value in fetched_stats:
-        all_stats["containers"].update(value)
-
-    return jsonify(all_stats)
+    return jsonify(host)
 
 
 @app.route("/container/<name>", methods=["GET"])
@@ -56,7 +47,7 @@ def ct_stats(name):
     # Look if container exists.
     if name in containers:
         # Return a single snapshot of that containers stats, converted to json.
-        return jsonify(pick_stats(containers[name]))
+        return jsonify(select_stats(containers[name]))
     else:
         return not_found(name)
 
@@ -146,7 +137,7 @@ def not_found(name):
     return f"{name} not found.", 404
 
 
-def pick_stats(ct) -> dict:
+def select_stats(ct) -> dict:
     """
     Picks out relevant container stats and formats them in a nested dict.
     """
@@ -162,8 +153,8 @@ def pick_stats(ct) -> dict:
     # Status
     ct_stats[ct]["status"] = ct_obj.status
 
-    # If container status is exited, then move on.
-    if ct_obj.status == "exited":
+    # Check if container status NOT running, just return status then.
+    if ct_obj.status != "running":
         return ct_stats
 
     # Stream doesnt include precpu data
@@ -199,9 +190,9 @@ def pick_stats(ct) -> dict:
 
 def background_updates():
     """
-    Update available containers
+    Update available containers, stats and images.
     """
-    # Makes the containers and formatted images available in a global context.
+    # Makes the containers with stats and formatted images available in a global context.
     global containers
     global formatted_images
 
@@ -218,8 +209,30 @@ def background_updates():
         time.sleep(5)
 
 
+def background_ct_stats():
+    """
+    Update container stats in the background.
+    """
+    # Expose host globally.
+    global host
+
+    # Create a dict structure for container data.
+    host = {"hostname": client.api.info().get("Name"), "containers": {}}
+
+    while True:
+        # Multithread stats collection.
+        with ThreadPoolExecutor() as executor:
+            fetched_stats = executor.map(select_stats, containers, timeout=5)
+
+        # Update dict from every fetched container stat.
+        for value in fetched_stats:
+            host["containers"].update(value)
+
+
 if __name__ == "__main__":
-    # Creates a thread that runs update_containers.
+    # Creates a thread that runs background tasks.
     threading.Thread(target=background_updates, daemon=True).start()
+    # Create a thread that updates container stats sin the background.
+    threading.Thread(target=background_ct_stats, daemon=True).start()
     # Start the webserver listening on all interfaces.
     app.run(host="0.0.0.0", debug=True)
