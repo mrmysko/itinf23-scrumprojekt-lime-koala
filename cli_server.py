@@ -35,9 +35,9 @@ def main():
                 ct_stats_print(ips)
                 input()
             case "2":
-                ct_action(hosts, "start")
+                ct_action(ips, "start")
             case "3":
-                ct_action(hosts, "stop")
+                ct_action(ips, "stop")
             case "4":
                 hosts_api_stats()
             case "e":
@@ -101,7 +101,6 @@ def ct_stats_print(ips):
     """
     Prints container stats from all hosts.
     """
-    global hosts
 
     hosts = pool_requests(ips)
 
@@ -117,13 +116,13 @@ def ct_stats_print(ips):
             )
 
 
-def ct_action(hosts, action):
+def ct_action(ips, action):
     """
     Start a container by list id.
     """
     clear_console()
     menu_print()
-    ct_stats_print(hosts)
+    hosts = ct_stats_print(ips)
 
     while True:
         id = input("ID: ")
