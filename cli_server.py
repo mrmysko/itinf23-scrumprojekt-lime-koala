@@ -32,7 +32,7 @@ def main():
         # Match user choice, no match reruns the loop.
         match user_choice:
             case "1":
-                ct_stats_print(ips)
+                ct_stats_print(pool_requests(ips))
                 input()
             case "2":
                 ct_action(ips, "start")
@@ -97,12 +97,10 @@ def pool_requests(ips):
     return hosts
 
 
-def ct_stats_print(ips):
+def ct_stats_print(hosts):
     """
     Prints container stats from all hosts.
     """
-
-    hosts = pool_requests(ips)
 
     # THIS CODE IS SUPER UGLY SHIEEEET
     for ip, value in hosts.items():
@@ -122,7 +120,11 @@ def ct_action(ips, action):
     """
     clear_console()
     menu_print()
-    hosts = ct_stats_print(ips)
+
+    # Fetch container stats from hosts.
+    hosts = pool_requests(ips)
+    # Print them
+    ct_stats_print(hosts)
 
     while True:
         id = input("ID: ")
