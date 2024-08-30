@@ -2,9 +2,6 @@
 
 # Server software which manipulates remote hosts with agents listening.
 
-# TODO - Variable length container name display. - Better printout
-# TODO - Merge Print CT and Update CT
-
 import requests
 import pprint
 import os
@@ -22,7 +19,6 @@ def main():
         "2": "Start CT",
         "3": "Stop CT",
         "4": "API status",
-        "5": "Update CT",
         "e": "Exit",
     }
 
@@ -36,16 +32,14 @@ def main():
         # Match user choice, no match reruns the loop.
         match user_choice:
             case "1":
-                ct_stats_print(hosts)
+                ct_stats_print(pool_requests(ips))
                 input()
             case "2":
-                ct_action(hosts, "start")
+                ct_action(ips, "start")
             case "3":
-                ct_action(hosts, "stop")
+                ct_action(ips, "stop")
             case "4":
                 hosts_api_stats()
-            case "5":
-                hosts = pool_requests(ips)
             case "e":
                 break
             case _:
@@ -115,38 +109,56 @@ def ct_stats_print(hosts):
             if len(name) > length:
                 length = len(name)
 
-    # THIS CODE IS SUPER UGLY SHIEEEET
     for ip, value in hosts.items():
         print(f'{value["hostname"]} ({ip})')
         print(
-            f'{"ID".rjust(3)} {"Name".rjust(length)} {"Status".rjust(10)} {"% CPU".rjust(10)} {"% MEM".rjust(10)}'
+            "ID".rjust(3),
+            "Name".rjust(10),
+            "Status".rjust(10),
+            "% CPU".rjust(10),
+            "% MEM".rjust(10),
         )
         for stat, stat_val in value["containers"].items():
             print(
-                f'{str(stat_val["id"]).rjust(3)} {stat.rjust(length)} {stat_val["status"].rjust(10)} {str(stat_val.get("cpu_percent", "")).rjust(10)} {str(stat_val.get("mem_percent", "")).rjust(10)}'
+                str(stat_val["id"]).rjust(3),
+                stat.rjust(10),
+                stat_val["status"].rjust(10),
+                str(stat_val.get(["cpu_percent"])).rjust(10),
+                str(stat_val.get(["mem_percent"])).rjust(10),
             )
 
 
-def ct_action(hosts, action):
+def ct_action(ips, action):
     """
     Start a container by list id.
     """
+    clear_console()
+    menu_print()
+
+    # Fetch container stats from hosts.
+    hosts = pool_requests(ips)
+    # Print them
     ct_stats_print(hosts)
 
     while True:
-        id = input("ID (0 = back): ")
-        if id == "0":
+        id = input("ID: ")
+        # Check if id is 0, a digit or something else.
+        if id.lower() == "b":
             break
         elif id.isdigit():
             for ip, value in hosts.items():
                 for ct_name, stats in value["containers"].items():
                     if stats["id"] == int(id):
-                        print(f"{action} {ct_name}")
-                        requests.get(f"http://{ip}:5000/container/{ct_name}/{action}")
+                        if requests.get(
+                            f"http://{ip}:5000/container/{ct_name}/{action}"
+                        ):
+                            print(f"{action} {ct_name}")
+                        else:
+                            print(f"Could not {action} {ct_name}")
                         input()
                         break
-        else:
-            print("Invalid input.")
+            else:
+                pass
 
 
 def hosts_api_stats():
