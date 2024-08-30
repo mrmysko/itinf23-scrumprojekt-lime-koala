@@ -147,43 +147,51 @@ def select_stats(ct) -> dict:
     stats = ct_obj.stats(stream=False)
 
     # Nested dict with container name as the top.
-    ct_stats = dict()
-    ct_stats[ct] = dict()
+    ct_stats = {ct: {}}
 
     # Status
     ct_stats[ct]["status"] = ct_obj.status
 
     # Check if container status NOT running, just return status then.
-    if ct_obj.status != "running":
+    if not ct_obj.status == "running":
         return ct_stats
 
-    # Stream doesnt include precpu data
-    # _________________________________
-    # Format CPU usage as a percentage.
-    cpu_stats = stats["cpu_stats"]
-    precpu_stats = stats["precpu_stats"]
+    try:
+        # Stream doesnt include precpu data
+        # _________________________________
+        # Format CPU usage as a percentage.
+        cpu_stats = stats["cpu_stats"]
+        precpu_stats = stats["precpu_stats"]
 
-    # Container CPU
-    ct_cpu = (
-        cpu_stats["cpu_usage"]["total_usage"] - precpu_stats["cpu_usage"]["total_usage"]
-    )
-    # System CPU
-    system_cpu = cpu_stats["system_cpu_usage"] - precpu_stats["system_cpu_usage"]
-    # Number of cores
-    cores = cpu_stats["online_cpus"]
+        # Container CPU
+        ct_cpu = (
+            cpu_stats["cpu_usage"]["total_usage"]
+            - precpu_stats["cpu_usage"]["total_usage"]
+        )
 
-    # Container CPU / System CPU * Number of cores * 100
-    ct_stats[ct]["cpu_percent"] = round(ct_cpu / system_cpu * cores * 100, 2)
+        # System CPU
+        system_cpu = cpu_stats.get("system_cpu_usage", 0) - precpu_stats.get(
+            "system_cpu_usage", 0
+        )
 
-    # ___________________________________
-    # Format memory usage as a percentage.
-    mem_stats = stats["memory_stats"]
+        # Number of cores
+        cores = cpu_stats["online_cpus"]
 
-    # Memory usage / Memory limit * 100
-    # Docker stats shows 0.01%, this shows 0.03%...hmmmm
-    ct_stats[ct]["mem_percent"] = round(
-        mem_stats["usage"] / mem_stats["limit"] * 100, 2
-    )
+        # Container CPU / System CPU * Number of cores * 100
+        ct_stats[ct]["cpu_percent"] = round(ct_cpu / system_cpu * cores * 100, 2)
+
+        # ___________________________________
+        # Format memory usage as a percentage.
+        mem_stats = stats["memory_stats"]
+
+        # Memory usage / Memory limit * 100
+        # Docker stats shows 0.01%, this shows 0.03%...hmmmm
+        ct_stats[ct]["mem_percent"] = round(
+            mem_stats["usage"] / mem_stats["limit"] * 100, 2
+        )
+
+    except KeyError:
+        return ct_stats
 
     return ct_stats
 
@@ -205,6 +213,7 @@ def background_updates():
         formatted_images = [
             str(item).replace("<Image: '", "").replace("'>", "") for item in images
         ]
+
         # Update every 5 seconds
         time.sleep(5)
 
@@ -216,17 +225,19 @@ def background_ct_stats():
     # Expose host globally.
     global host
 
-    # Create a dict structure for container data.
-    host = {"hostname": client.api.info().get("Name"), "containers": {}}
-
     while True:
         # Multithread stats collection.
         with ThreadPoolExecutor() as executor:
             fetched_stats = executor.map(select_stats, containers, timeout=5)
 
+        # Create a dict structure for container data.
+        host = {"hostname": client.api.info().get("Name"), "containers": {}}
+
         # Update dict from every fetched container stat.
         for value in fetched_stats:
             host["containers"].update(value)
+
+        time.sleep(5)
 
 
 if __name__ == "__main__":

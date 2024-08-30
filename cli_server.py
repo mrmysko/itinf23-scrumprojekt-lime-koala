@@ -123,8 +123,8 @@ def ct_stats_print(hosts):
                 str(stat_val["id"]).rjust(3),
                 stat.rjust(10),
                 stat_val["status"].rjust(10),
-                str(stat_val.get(["cpu_percent"])).rjust(10),
-                str(stat_val.get(["mem_percent"])).rjust(10),
+                str(stat_val.get("cpu_percent")).rjust(10),
+                str(stat_val.get("mem_percent")).rjust(10),
             )
 
 
