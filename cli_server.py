@@ -109,7 +109,6 @@ def ct_stats_print(hosts):
             if len(name) > length:
                 length = len(name)
 
-    # THIS CODE IS SUPER UGLY SHIEEEET
     for ip, value in hosts.items():
         print(f'{value["hostname"]} ({ip})')
         print(
