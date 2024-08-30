@@ -102,7 +102,13 @@ def ct_stats_print(hosts):
     Prints container stats from all hosts.
     """
 
-    # THIS CODE IS SUPER UGLY SHIEEEET
+    # Get longest container name.
+    length = 0
+    for value in hosts.values():
+        for name in value["containers"]:
+            if len(name) > length:
+                length = len(name)
+
     for ip, value in hosts.items():
         print(f'{value["hostname"]} ({ip})')
         print(
@@ -117,8 +123,8 @@ def ct_stats_print(hosts):
                 str(stat_val["id"]).rjust(3),
                 stat.rjust(10),
                 stat_val["status"].rjust(10),
-                str(stat_val["cpu_percent"]).rjust(10),
-                str(stat_val["mem_percent"]).rjust(10),
+                str(stat_val.get(["cpu_percent"])).rjust(10),
+                str(stat_val.get(["mem_percent"])).rjust(10),
             )
 
 
