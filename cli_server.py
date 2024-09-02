@@ -113,7 +113,7 @@ def ct_stats_print(hosts):
         print(f'{value["hostname"]} ({ip})')
         print(
             "ID".rjust(3),
-            "Name".rjust(10),
+            "Name".rjust(length),
             "Status".rjust(10),
             "% CPU".rjust(10),
             "% MEM".rjust(10),
@@ -121,7 +121,7 @@ def ct_stats_print(hosts):
         for stat, stat_val in value["containers"].items():
             print(
                 str(stat_val["id"]).rjust(3),
-                stat.rjust(10),
+                stat.rjust(length),
                 stat_val["status"].rjust(10),
                 str(stat_val.get("cpu_percent")).rjust(10),
                 str(stat_val.get("mem_percent")).rjust(10),
